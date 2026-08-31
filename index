@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kos Finder — Jakarta Timur & Kelapa Gading</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<style>
+  :root{
+    --paper:#FAF6EE;
+    --paper-dim:#F1EAD9;
+    --ink:#201D18;
+    --ink-soft:#5B564C;
+    --teal:#123B3E;
+    --teal-deep:#0B2628;
+    --amber:#E2711D;
+    --amber-deep:#B8560F;
+    --green:#2F8F5B;
+    --line:#D8CFB8;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:18px 16px 60px;}
+
+  /* ---------- Ticket hero ---------- */
+  .ticket{
+    background:var(--teal);
+    color:var(--paper);
+    border-radius:14px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(11,38,40,0.25);
+  }
+  .ticket-top{
+    padding:22px 22px 18px;
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--amber);
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  .ticket h1{
+    margin:0;
+    font-size:23px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    line-height:1.25;
+  }
+  .ticket h1 span{color:var(--amber);}
+  .perforation{
+    position:relative;
+    height:0;
+    border-top:2px dashed rgba(250,246,238,0.35);
+    margin:0 22px;
+  }
+  .perforation::before,.perforation::after{
+    content:"";
+    position:absolute;
+    top:-11px;
+    width:22px;height:22px;
+    background:var(--paper);
+    border-radius:50%;
+  }
+  .perforation::before{left:-33px;}
+  .perforation::after{right:-33px;}
+  .ticket-bottom{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    padding:16px 22px 20px;
+    gap:10px;
+  }
+  .stub{}
+  .stub .k{
+    font-size:9.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:rgba(250,246,238,0.55);
+    margin:0 0 3px;
+  }
+  .stub .v{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    font-size:15px;
+    font-weight:600;
+    color:var(--paper);
+  }
+  .ticket-link{
+    display:inline-block;
+    margin-top:2px;
+    font-size:11px;
+    color:var(--amber);
+    text-decoration:none;
+    border-bottom:1px solid rgba(226,113,29,0.5);
+  }
+
+  /* ---------- Ref point panel ---------- */
+  .refpanel{
+    margin-top:10px;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .refpanel .rp-label{
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    font-weight:700;
+    margin:0 0 8px;
+  }
+  .refpanel .rp-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:6px;
+  }
+  .refpanel input{
+    flex:1 1 160px;
+    padding:9px 11px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    font-size:13px;
+    color:var(--ink);
+  }
+  .refpanel input:focus{outline:none;border-color:var(--teal);}
+  .refpanel .rp-btn{
+    padding:9px 14px;
+    border-radius:8px;
+    border:none;
+    background:var(--teal);
+    color:var(--paper);
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .refpanel .rp-chip{
+    flex:1 1 auto;
+    background:var(--paper-dim);
+    color:var(--ink-soft);
+    border:1.5px solid var(--line);
+  }
+  .refpanel .rp-chip.active{
+    background:var(--amber);
+    color:#fff;
+    border-color:var(--amber-deep);
+  }
+  .refpanel .rp-hint{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin:6px 0 0;
+    line-height:1.5;
+  }
+  .refpanel .rp-error{
+    font-size:11.5px;
+    color:#B8560F;
+    margin:6px 0 0;
+    display:none;
+  }
+
+  /* ---------- Tag panel ---------- */
+  .tagpanel{
+    margin-top:10px;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .tagpanel-current{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+  }
+  .tagpanel-current .chip-static{
+    font-size:11px;
+    padding:4px 9px;
+    border-radius:999px;
+    background:var(--paper-dim);
+    color:var(--ink-soft);
+    font-weight:600;
+  }
+  .tagpanel-current .chip-static button{
+    border:none;
+    background:none;
+    color:var(--amber-deep);
+    font-weight:800;
+    cursor:pointer;
+    margin-left:5px;
+    padding:0;
+    font-size:12px;
+    line-height:1;
+  }
+
+  /* ---------- Per-kos status pills ---------- */
+  .tagrow{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+    margin:0 0 10px;
+  }
+  .tagrow-label{
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    font-weight:700;
+    margin-right:2px;
+  }
+  .pill{
+    font-size:11.5px;
+    font-weight:600;
+    padding:5px 11px;
+    border-radius:999px;
+    border:1.5px solid var(--line);
+    background:var(--paper-dim);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .pill.active{
+    background:var(--green);
+    border-color:var(--green);
+    color:#fff;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    margin-top:18px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .search{
+    flex:1 1 200px;
+    padding:11px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    font-size:14px;
+    color:var(--ink);
+  }
+  .search:focus{outline:none;border-color:var(--teal);}
+  select.sort{
+    padding:11px 12px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    font-size:13px;
+    color:var(--ink);
+  }
+
+  .speedbox{
+    margin-top:12px;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .speedbox label{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .speedbox input[type=range]{flex:1;accent-color:var(--amber);}
+  .speedbox .speedval{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    font-weight:700;
+    font-size:13px;
+    min-width:64px;
+    text-align:right;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    margin-top:16px;
+    display:flex;
+    gap:8px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:11px 8px;
+    border-radius:10px;
+    background:var(--paper-dim);
+    border:1.5px solid transparent;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+    user-select:none;
+  }
+  .tab.active{
+    background:var(--teal);
+    color:var(--paper);
+    border-color:var(--teal-deep);
+  }
+  .tab .n{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+
+  /* ---------- View toggle ---------- */
+  .viewtoggle{
+    margin-top:10px;
+    display:flex;
+    gap:8px;
+  }
+  .viewbtn{
+    flex:1;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:10px;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .viewbtn.active{
+    background:var(--amber);
+    border-color:var(--amber-deep);
+    color:#fff;
+  }
+
+  /* ---------- Cards ---------- */
+  .list{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+  .card{
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .card h3{
+    margin:0 0 4px;
+    font-size:15px;
+    font-weight:700;
+    line-height:1.3;
+  }
+  .addr{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:0 0 8px;
+    line-height:1.4;
+  }
+  .areatag{
+    font-weight:700;
+    color:var(--teal);
+  }
+  .rating{
+    font-size:12px;
+    color:var(--amber-deep);
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .rating .rc{color:var(--ink-soft);font-weight:500;}
+  .badge{
+    display:inline-block;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.04em;
+    padding:3px 7px;
+    border-radius:6px;
+    margin-bottom:8px;
+  }
+  .badge.wa{background:rgba(47,143,91,0.12);color:var(--green);}
+  .badge.no{background:rgba(91,86,76,0.1);color:var(--ink-soft);}
+
+  .meter-row{
+    display:flex;
+    gap:18px;
+    margin:10px 0 12px;
+    padding:10px 12px;
+    background:var(--paper-dim);
+    border-radius:8px;
+  }
+  .meter .mv{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    font-size:20px;
+    font-weight:800;
+    color:var(--teal);
+    line-height:1;
+  }
+  .meter .mv small{font-size:12px;font-weight:600;}
+  .meter .ml{
+    font-size:9.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-top:3px;
+  }
+
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    flex:1;
+    text-align:center;
+    padding:9px 10px;
+    border-radius:8px;
+    font-size:12.5px;
+    font-weight:700;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .btn.loc{background:var(--teal);color:var(--paper);}
+  .btn.wa{background:var(--green);color:#fff;}
+  .btn.disabled{background:var(--paper-dim);color:var(--ink-soft);pointer-events:none;}
+  .miniroute{
+    display:inline-block;
+    margin:6px 0 10px;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-decoration:none;
+    border-bottom:1px dashed var(--line);
+  }
+
+  .empty{
+    text-align:center;
+    padding:40px 20px;
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+
+  /* ---------- Map view ---------- */
+  .mapwrap{margin-top:14px;}
+  .mapcanvas{
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    background-color:var(--paper-dim);
+    border-radius:14px;
+    border:1.5px solid var(--line);
+    overflow:hidden;
+    z-index: 1; /* Fixes stacking issues with Leaflet controls */
+  }
+  
+  /* Reset leaflet icon wrapper so we can use our custom DOM styling */
+  .leaflet-div-icon {
+    background: transparent;
+    border: none;
+  }
+  
+  .mapmarker{cursor:pointer;}
+  .mapmarker.single{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .mapdot{
+    width:11px;height:11px;
+    border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.35);
+    margin-top:-3px;
+  }
+  .mapdot.ada{background:var(--green);}
+  .mapdot.tanpa{background:var(--ink-soft);}
+  .mapbubble{
+    background:#fff;
+    border-radius:14px;
+    padding:4px 10px;
+    font-size:11px;
+    font-weight:800;
+    color:var(--teal);
+    box-shadow:0 2px 6px rgba(0,0,0,0.18);
+    margin-bottom:4px;
+    white-space:nowrap;
+  }
+  .mapmarker.cluster{}
+  .clusterbadge{
+    width:34px;height:34px;
+    border-radius:50%;
+    background:#fff;
+    border:2px solid var(--teal);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:13px;
+    color:var(--teal);
+    box-shadow:0 2px 6px rgba(0,0,0,0.22);
+  }
+  .mapmarker.refmark{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    cursor:default;
+  }
+  .refpin{
+    width:24px;height:24px;
+    border-radius:50%;
+    background:#E24C3D;
+    border:3px solid #fff;
+    box-shadow:0 2px 8px rgba(0,0,0,0.35);
+  }
+  .reflabel{
+    margin-top:5px;
+    background:#fff;
+    padding:3px 9px;
+    border-radius:8px;
+    font-size:10.5px;
+    font-weight:800;
+    color:var(--ink);
+    box-shadow:0 1px 5px rgba(0,0,0,0.18);
+    white-space:nowrap;
+    max-width:150px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .maphint{
+    margin-top:8px;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .mapdetail{margin-top:12px;}
+  .mapdetail:empty{margin-top:0;}
+  .clusterlist{
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .clusterlist-title{
+    margin:0 0 8px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink-soft);
+  }
+  .clusterlist-item{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:var(--paper-dim);
+    color:var(--ink);
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+    cursor:pointer;
+  }
+  .mapdetail-close{
+    display:block;
+    width:100%;
+    text-align:center;
+    padding:8px;
+    margin-top:6px;
+    border-radius:8px;
+    border:none;
+    background:var(--paper-dim);
+    color:var(--ink-soft);
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  footer{
+    margin-top:26px;
+    text-align:center;
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="ticket">
+    <div class="ticket-top">
+      <p class="eyebrow">Boarding Pass · Kos Finder</p>
+      <h1>Dari <span id="refLabelDisplay">Summarecon Kelapa Gading</span></h1>
+    </div>
+    <div class="perforation"></div>
+    <div class="ticket-bottom">
+      <div class="stub">
+        <p class="k">Radius</p>
+        <p class="v">5 KM</p>
+      </div>
+      <div class="stub">
+        <p class="k">Moda</p>
+        <p class="v">MOTOR</p>
+      </div>
+      <div class="stub">
+        <p class="k">Ditemukan</p>
+        <p class="v" id="totalCount">— KOS</p>
+      </div>
+    </div>
+  </div>
+  <a class="ticket-link" id="refCurrentLink" href="https://www.google.com/maps/search/?api=1&query=Summarecon+Mall+Kelapa+Gading" target="_blank" rel="noopener" style="margin-top:8px;">Lihat titik acuan di Google Maps →</a>
+
+  <div class="refpanel">
+    <p class="rp-label">Ganti titik acuan</p>
+    <div class="rp-row">
+      <button class="rp-btn rp-chip" id="chipKG">Summarecon Kelapa Gading</button>
+      <button class="rp-btn rp-chip" id="chipVelo">JI Velodrome</button>
+    </div>
+    <div class="rp-row">
+      <input id="refPasteInput" type="text" placeholder="Atau tempel link Google Maps (lengkap) / lat,lng lain">
+      <input id="refLabelInput" type="text" placeholder="Nama lokasi (opsional)">
+    </div>
+    <div class="rp-row">
+      <button class="rp-btn" id="refApplyBtn">Update Titik</button>
+    </div>
+    <p class="rp-error" id="refError">Link/koordinat tidak dikenali. Pakai link Google Maps lengkap (bukan link pendek), atau format "lat,lng" — misal -6.175,106.902.</p>
+    <p class="rp-hint">Menghitung ulang jarak & waktu ke semua kos yang sudah pernah dicari (Kelapa Gading + Rawamangun/Velodrome) dari titik baru — bukan pencarian kos baru.</p>
+  </div>
+
+  <div class="tagpanel">
+    <p class="rp-label">Tandai status kos</p>
+    <div class="rp-row">
+      <input id="newTagInput" type="text" placeholder="Tambah status baru, misal: Sudah DP">
+      <button class="rp-btn" id="addTagBtn">Tambah</button>
+    </div>
+    <div class="tagpanel-current" id="tagOptionsPreview"></div>
+    <p class="rp-hint">Klik status di tiap kos untuk menandai/melepas (bisa lebih dari satu). Status baru langsung tersedia di semua kos, dan tersimpan otomatis untuk kunjungan berikutnya.</p>
+  </div>
+
+  <div class="controls">
+    <input class="search" id="searchInput" type="text" placeholder="Cari nama kos...">
+    <select class="sort" id="sortSelect">
+      <option value="distance">Urutkan: Terdekat</option>
+      <option value="rating">Urutkan: Rating tertinggi</option>
+      <option value="name">Urutkan: Nama A-Z</option>
+    </select>
+  </div>
+
+  <div class="controls">
+    <select class="sort" id="filterTagSelect" style="flex:1;"></select>
+  </div>
+
+  <div class="speedbox">
+    <label>Asumsi kecepatan motor</label>
+    <input type="range" id="speedRange" min="12" max="40" value="25" step="1">
+    <span class="speedval" id="speedVal">25 km/j</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="ada" id="tabAda">Ada Kontak <span class="n" id="countAda">(0)</span></div>
+    <div class="tab" data-tab="tanpa" id="tabTanpa">Tanpa Kontak <span class="n" id="countTanpa">(0)</span></div>
+  </div>
+
+  <div class="viewtoggle">
+    <button class="viewbtn active" id="viewListBtn">📋 Daftar</button>
+    <button class="viewbtn" id="viewMapBtn">🗺️ Peta</button>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="mapwrap" id="mapWrap" style="display:none;">
+    <div class="mapcanvas" id="mapCanvas"></div>
+    <p class="maphint">Ketuk angka pada peta (cluster) untuk melihat daftar kos yang saling berdekatan di area tersebut.</p>
+    <div class="mapdetail" id="mapDetail"></div>
+  </div>
+
+  <footer>
+    Data lokasi & rating bersumber dari Google Maps.<br>
+    Jarak dihitung garis lurus (bukan rute jalan); estimasi waktu adalah perkiraan kasar.<br>
+    "Lihat Lokasi" membuka titik kos di Google Maps. "Rute dari titik acuan" menghitung arah dari titik acuan saat ini.<br>
+    Status/tag tersimpan otomatis di perangkat ini untuk kunjungan berikutnya.
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+const DEFAULT_REF = { lat: -6.1574441, lng: 106.9084598, label: "Summarecon Kelapa Gading" };
+const VELODROME_REF = { lat: -6.191085, lng: 106.890227, label: "Jakarta International Velodrome" };
+
+const RAW_KELAPA_GADING = [
+  {name:"KOST MKG / KOS MKG / Gading Indah Utara IX Ni2/10 (KOST GIU)",addr:"Jl. Gading Indah Utara IX No.2/10, Pegangsaan Dua",lat:-6.1559651,lng:106.9118423,rating:4.8,rc:80,phone:"+62 877-8777-8770"},
+  {name:"Kost Kelapa Gading - Kos Putri Ruma Kitty",addr:"Jl. Kuning Muda Blok C7 No.20, Klp. Gading Tim.",lat:-6.1640342,lng:106.908447,rating:4.7,rc:94,phone:"+62 812-1417-5255"},
+  {name:"Kost MKG V / Gading Indah Utara V NH8/25 (KOST GIU V)",addr:"Jl. Gading Indah Utara V, Pegangsaan Dua",lat:-6.159414,lng:106.9131934,rating:4.9,rc:57,phone:"+62 877-8777-8770"},
+  {name:"Homeya Kost Kelapa Gading",addr:"Jl. Kelapa Cengkir Barat XII Blok FT2 No.24, Klp. Gading Tim.",lat:-6.1628352,lng:106.9061722,rating:4.7,rc:57,phone:"+62 817-799-951"},
+  {name:"Kost Kelapa Gading \"b'kos of U\"",addr:"Jl. Kelapa Molek I No.A2 No.14, Klp. Gading Tim.",lat:-6.1726010,lng:106.900015,rating:5.0,rc:18,phone:"+62 821-1372-2432"},
+  {name:"Kost Gading Kopyor",addr:"Jl. Raya Klp. Kopyor No.12 Blok BA 2, East Kelapa Gading",lat:-6.1708823,lng:106.9043431,rating:5.0,rc:10,phone:"+62 818-723-759"},
+  {name:"Kost Kelapa Gading",addr:"Perumahan Kelapa Gading Permai, Jl. Gading Elok Timur VIII Blok BR-1 No.4",lat:-6.1706456,lng:106.9064960,rating:4.0,rc:125,phone:"+62 811-190-935"},
+  {name:"Kos Oemah Hybrida Kelapa Gading",addr:"Jl. Klp. Hybrida V No.17 Blk RA14, Pegangsaan Dua",lat:-6.1462686,lng:106.9111036,rating:4.7,rc:3,phone:"+62 859-2167-0164"},
+  {name:"Neo Molek Kost Kelapa Gading",addr:"Jl. Kelapa Molek III No.5 No.C2, Klp. Gading Tim.",lat:-6.1717253,lng:106.9000508,rating:5.0,rc:48,phone:"+62 896-5127-2456"},
+  {name:"Kos Hijau Daun 12A Blok C1 Kelapa Gading",addr:"Jl. Hijau Daun No.12A Blok C1, Klp. Gading Tim.",lat:-6.1653224,lng:106.9071856,rating:4.9,rc:10,phone:null},
+  {name:"Kost Grace House Kelapa Gading",addr:"Jl. Gading Putih I No.21 Blok F2, Klp. Gading Tim.",lat:-6.1703343,lng:106.9010419,rating:5.0,rc:23,phone:"+62 811-8287-778"},
+  {name:"Kost Green Cost",addr:"Jl. Kelapa Lilin III Blok NG7 No.2, Pegangsaan Dua",lat:-6.1580701,lng:106.9107342,rating:5.0,rc:25,phone:"+62 812-8289-3389"},
+  {name:"Kost Charita Kelapa Gading",addr:"Jl. Acordion L No.4, Pegangsaan Dua",lat:-6.1739125,lng:106.9092179,rating:5.0,rc:11,phone:"+62 816-946-656"},
+  {name:"Neo Ruby Kost Kelapa Gading",addr:"Jl. Kelapa Puyuh I No.22, Klp. Gading Tim.",lat:-6.1748089,lng:106.9019347,rating:5.0,rc:20,phone:"+62 896-5127-2456"},
+  {name:"Kost Kelapa Gading - Janur Kuning",addr:"Jl. Janur Kuning IX No.1 Blok WO2, Klp. Gading Tim.",lat:-6.1617046,lng:106.9020903,rating:4.6,rc:46,phone:"+62 878-8743-6616"},
+  {name:"Kost Kelapa Gading (Seberang MKG)",addr:"Jl. Pelepah Indah I, Klp. Gading Tim.",lat:-6.1577955,lng:106.9064119,rating:4.8,rc:6,phone:"+62 896-5500-1357"},
+  {name:"Kost Putih Melati (Khusus Putri)",addr:"Jl. Putih Melati No.31, Klp. Gading Tim.",lat:-6.1643956,lng:106.9070591,rating:4.8,rc:4,phone:"+62 812-8256-6612"},
+  {name:"Kost Putri Kelapa Gading - Rumah Teduh",addr:"Blok S, Jl. Tarian Raya Barat No.14, Klp. Gading Tim.",lat:-6.168905,lng:106.9107428,rating:4.7,rc:13,phone:"+62 813-9898-6816"},
+  {name:"Kost Putra Putri Nung",addr:"Jl. Gading Kirana Tim. No.5-2 Blok H2, Klp. Gading Bar.",lat:-6.145012,lng:106.9006436,rating:null,rc:null,phone:null},
+  {name:"Kost Putri Kelapa Gading",addr:"Jl. Kuda Lumping No.13 Blok U, Pegangsaan Dua",lat:-6.172971,lng:106.9092132,rating:5.0,rc:1,phone:"+62 811-8189-292"},
+  {name:"Kost Surya Kopyor",addr:"Jl. Kelapa Kopyor Barat 2 Blok CG2 No.8, Klp. Gading Tim.",lat:-6.1686424,lng:106.9022234,rating:5.0,rc:5,phone:"+62 859-4687-9870"},
+  {name:"Kost Putri Seudati Kelapa Gading",addr:"Jl. Seudati No.12, Klp. Gading Tim.",lat:-6.1708373,lng:106.9091972,rating:5.0,rc:1,phone:"+62 812-9423-334"},
+  {name:"Kos Ultra Eksklusif",addr:"A3 No.13, Jl. Ultra Violet, Klp. Gading Tim.",lat:-6.1666047,lng:106.9065072,rating:4.5,rc:13,phone:"+62 817-4870-476"},
+  {name:"Gading Elok Residence",addr:"Jl. Gading Elok Timur III Blok BM1 No.15, East Kelapa Gading",lat:-6.168873,lng:106.9056198,rating:4.5,rc:39,phone:null},
+  {name:"Cocoa Kost Kelapa Gading",addr:"Jl. Kelapa Molek IV No.RT.7, Klp. Gading Tim.",lat:-6.1733265,lng:106.9038607,rating:4.1,rc:88,phone:"+62 815-9977-731"},
+  {name:"Rukita D'kubik Dom Kelapa Gading - Kost Coliving",addr:"Jl. Melodi Mas 3 No.A6 No.7, Pegangsaan Dua",lat:-6.1730631,lng:106.9121483,rating:4.6,rc:23,phone:"+62 811-9008-7829"},
+  {name:"Rukita Iconic Kelapa Gading - Kost Coliving",addr:"Jl. Gading Putih Raya Blok KE 33, Klp. Gading Tim.",lat:-6.1743087,lng:106.9009391,rating:4.6,rc:41,phone:"+62 811-9008-7829"},
+];
+RAW_KELAPA_GADING.forEach(p => p.area = "Kelapa Gading");
+
+const RAW_VELODROME = [
+  {name:"Pemuda Kost Rawamangun",addr:"Jl. Pemuda Asli 1 No.68, Rawamangun",lat:-6.1909375,lng:106.8811875,rating:4.8,rc:46,phone:"+62 857-8217-9763"},
+  {name:"Kost/Kos Misnayetti Rawamangun (dekat UNJ, Arion, STIE Indonesia, SMEC)",addr:"Jl. Pemuda No.62, Rawamangun",lat:-6.19282,lng:106.88358,rating:null,rc:null,phone:"+62 813-8952-7851"},
+  {name:"Rumah Kost \"Romario\"",addr:"Jl. Balai Pustaka Barat No.349B, Rawamangun",lat:-6.1987016,lng:106.8827507,rating:4.5,rc:89,phone:"+62 858-1137-4999"},
+  {name:"Indekost Griya Karsa Antasena (Khusus Karyawati & Mahasiswi)",addr:"Jl. Kayu Jati I Gg. V No.12A, Rawamangun",lat:-6.1914622,lng:106.8855749,rating:5.0,rc:17,phone:"+62 812-9535-4664"},
+  {name:"Kost Laura",addr:"Jl. Pemuda No.31, Rawamangun",lat:-6.1927709,lng:106.8807258,rating:4.0,rc:118,phone:"+62 877-3267-2151"},
+  {name:"NaLa Kost",addr:"Jl. Balap Sepeda 4 No.2, Rawamangun",lat:-6.1896983,lng:106.8883626,rating:4.9,rc:17,phone:"+62 895-4149-5188"},
+  {name:"Rumah Kost Khusus Putri HJ Zura",addr:"Jl. Kayu Jati V (dekat Rusunawa UNJ), Rawamangun",lat:-6.1905187,lng:106.8880317,rating:4.7,rc:27,phone:"+62 813-1100-7553"},
+  {name:"Kost Jihan",addr:"Jl. Pratekan No.52, Rawamangun",lat:-6.1907305,lng:106.8814421,rating:4.8,rc:28,phone:"+62 821-1234-4671"},
+  {name:"Kos Rawamangun Cipinang (dekat RS Persahabatan, UNJ, kawasan industri)",addr:"Jl. Cipinang Baru IV No.1, Cipinang",lat:-6.2043373,lng:106.8911391,rating:4.9,rc:14,phone:"+62 822-4644-6500"},
+  {name:"Aulia Kost",addr:"Jl. Jati Rw. Mangun, Jl. Melati Dalam No.48, Jati",lat:-6.1928623,lng:106.898181,rating:4.9,rc:10,phone:"+62 813-1946-9263"},
+  {name:"Kost Cowok Rawamangun",addr:"Jl. Lindung II No.8, Jati",lat:-6.1982358,lng:106.8945982,rating:5.0,rc:24,phone:"+62 812-1100-7654"},
+  {name:"Red Kost + Griya Laundry 2",addr:"Jl. Kayu Jati II Gg. VI No.6, Rawamangun",lat:-6.1911133,lng:106.8855976,rating:4.7,rc:58,phone:"+62 812-8321-2201"},
+  {name:"Rukita Balai Pustaka Rawamangun - Kost Coliving",addr:"Jl. Balai Pustaka Barat No.19, Rawamangun",lat:-6.1987192,lng:106.8831525,rating:4.6,rc:29,phone:"+62 811-9008-7829"},
+  {name:"Kost Putri White Home Crew",addr:"Jl. Balap Sepeda IV No.104, Rawamangun",lat:-6.1891089,lng:106.8905465,rating:5.0,rc:40,phone:"+62 813-1635-1112"},
+  {name:"Kost Widya Rawamangun",addr:"Jl. Remaja II No.39A, Jatinegara Kaum",lat:-6.1964227,lng:106.9044146,rating:5.0,rc:25,phone:"+62 816-1605-602"},
+  {name:"Nanda Kost Pulogadung",addr:"Jl. Jati Raya No.27, Jati",lat:-6.1907491,lng:106.9035794,rating:4.8,rc:39,phone:null},
+  {name:"Home Kost 31",addr:"Jl. Balai Pustaka Baru No.31, Rawamangun",lat:-6.1944363,lng:106.8853682,rating:4.3,rc:16,phone:"+62 813-1602-1833"},
+  {name:"Kost Arnoko Residence Pulo Gadung",addr:"Jl. Belanak I No.12B, Jati",lat:-6.1996952,lng:106.8922225,rating:4.5,rc:15,phone:"+62 811-9008-7829"},
+  {name:"Kost Cakalang 3C",addr:"Jl. Cakalang No.3C, Jati",lat:-6.1949987,lng:106.8935315,rating:4.3,rc:52,phone:"+62 812-9164-8199"},
+  {name:"Kost JP1000",addr:"Jl. Taruna Dalam Raya No.2, Pulo Gadung",lat:-6.1850764,lng:106.9002648,rating:4.9,rc:15,phone:"+62 822-9782-9708"},
+  {name:"Rumah Kost Green Mustika",addr:"Jl. Mustika Jaya II No.11B-C, Rawamangun",lat:-6.2000211,lng:106.8843982,rating:4.8,rc:13,phone:"+62 813-1639-3048"},
+  {name:"Kost Putri Ayu, Rawamangun",addr:"Jl. Pratekan No.49A, Rawamangun",lat:-6.1906334,lng:106.8815883,rating:5.0,rc:8,phone:"+62 811-1982-182"},
+  {name:"Rumah Kost Putri Bapak Imam",addr:"Jl. Pratekan No.22, Rawamangun",lat:-6.1901523,lng:106.8810375,rating:5.0,rc:5,phone:"+62 813-2394-1111"},
+  {name:"Kost Putra Putri",addr:"Jl. H. Mugeni 1 No.17, Pisangan Timur",lat:-6.2095583,lng:106.8773809,rating:5.0,rc:1,phone:null},
+  {name:"Kost Muslimah Putri Jakarta Timur",addr:"Jl. Pulo Asem Timur VIII No.24, Jati",lat:-6.1909431,lng:106.896897,rating:4.9,rc:19,phone:"+62 811-1994-860"},
+  {name:"Blue FIFA Kost",addr:"Jl. Kayu Jati I Gg. V No.21, Rawamangun",lat:-6.1913783,lng:106.885345,rating:5.0,rc:4,phone:"+62 852-2222-6023"},
+  {name:"Pondok Muslimah 10",addr:"Jl. Pemuda III A No.3, Rawamangun",lat:-6.1905126,lng:106.8793023,rating:4.9,rc:44,phone:null},
+  {name:"Kos Puri Dewi",addr:"Jl. Pulo Asem III No.47, Jati",lat:-6.1923125,lng:106.8941312,rating:5.0,rc:7,phone:"+62 816-1126-919"},
+  {name:"Kost Putri UTRNET Rawamangun (Dilarang Merokok)",addr:"Jl. Kayu Jati V No.21, Rawamangun",lat:-6.1901739,lng:106.8866454,rating:5.0,rc:1,phone:"+62 852-1066-5322"},
+  {name:"Kos Bu Ros (Khusus Mahasiswi/Karyawati)",addr:"Jl. Rw. Mangun Tegalan No.10, Rawamangun",lat:-6.1905461,lng:106.8789427,rating:4.8,rc:12,phone:"+62 821-1125-0882"},
+  {name:"Kost Gading Putih",addr:"Jl. Gading Putih Raya Blok SC2 No.6, East Kelapa Gading",lat:-6.1731452,lng:106.9013509,rating:4.4,rc:82,phone:"+62 817-0010-011"},
+];
+RAW_VELODROME.forEach(p => p.area = "Rawamangun / Velodrome");
+
+const RAW = [...RAW_KELAPA_GADING, ...RAW_VELODROME];
+
+function haversineKm(lat1, lng1, lat2, lng2){
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
+
+const DATA = RAW.map((p, i) => ({
+  ...p,
+  id: i,
+  waLink: p.phone ? `https://wa.me/${p.phone.replace(/\D/g,'')}` : null,
+  locationLink: `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`
+}));
+
+const DEFAULT_TAGS = ["Sudah Dichat", "Sudah Survei Lokasi", "Kamar Penuh", "Favorit"];
+
+async function safeGet(key){
+  try{
+    const r = await window.storage.get(key, false);
+    return r ? r.value : null;
+  }catch(e){ return null; }
+}
+async function safeSet(key, value){
+  try{ await window.storage.set(key, value, false); }catch(e){ /* storage unavailable */ }
+}
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
+}
+
+let state = { search:"", tab:"ada", sort:"distance", speed:25, ref: {...VELODROME_REF}, tagOptions: [], kosTags: {}, filterTag: "", view: "list", mapSelection: null };
+let leafletMap = null;
+let mapLayerGroup = null;
+
+async function loadPersisted(){
+  const savedOpts = await safeGet('tag-options');
+  if(savedOpts){
+    state.tagOptions = JSON.parse(savedOpts);
+  }else{
+    state.tagOptions = DEFAULT_TAGS.slice();
+    safeSet('tag-options', JSON.stringify(state.tagOptions));
+  }
+  const savedTags = await safeGet('kos-tags');
+  state.kosTags = savedTags ? JSON.parse(savedTags) : {};
+  render();
+}
+
+function parseRefInput(raw){
+  const s = raw.trim();
+  if(!s) return null;
+  let m = s.match(/^(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)$/);
+  if(m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = s.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/);
+  if(m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = s.match(/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/);
+  if(m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  return null;
+}
+
+function updateRefDisplay(){
+  document.getElementById('refLabelDisplay').textContent = state.ref.label;
+  document.getElementById('refCurrentLink').href = `https://www.google.com/maps/search/?api=1&query=${state.ref.lat},${state.ref.lng}`;
+  document.getElementById('chipKG').classList.toggle('active', state.ref.label === DEFAULT_REF.label);
+  document.getElementById('chipVelo').classList.toggle('active', state.ref.label === VELODROME_REF.label);
+}
+
+function renderTagOptionsPreview(){
+  const el = document.getElementById('tagOptionsPreview');
+  if(state.tagOptions.length === 0){ el.innerHTML = ''; return; }
+  el.innerHTML = state.tagOptions.map(t => `<span class="chip-static">${escapeHtml(t)}<button data-remove-tag="${escapeHtml(t)}" title="Hapus status ini">×</button></span>`).join('');
+}
+
+function renderFilterOptions(){
+  const sel = document.getElementById('filterTagSelect');
+  const current = state.filterTag;
+  sel.innerHTML = `<option value="">Filter status: Semua</option>` +
+    state.tagOptions.map(t => `<option value="${escapeHtml(t)}">Filter status: ${escapeHtml(t)}</option>`).join('');
+  sel.value = current;
+}
+
+function renderKosCard(p){
+  const mins = Math.round((p.distanceKm / state.speed) * 60);
+  const ratingHtml = p.rating ? `<span class="rating">★ ${p.rating.toFixed(1)} <span class="rc">(${p.rc})</span></span>` : '';
+  const badge = p.phone ? `<span class="badge wa">ADA KONTAK</span>` : `<span class="badge no">TANPA KONTAK</span>`;
+  const waBtn = p.waLink ? `<a class="btn wa" href="${p.waLink}" target="_blank" rel="noopener">Chat WhatsApp</a>` : `<span class="btn disabled">Tanpa Kontak</span>`;
+  const activeTags = state.kosTags[p.id] || [];
+  const pillsHtml = state.tagOptions.map(t => {
+    const on = activeTags.includes(t);
+    return `<button class="pill ${on?'active':''}" data-tag="${escapeHtml(t)}" data-id="${p.id}">${on?'✓ ':''}${escapeHtml(t)}</button>`;
+  }).join('');
+  return `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          ${badge}
+          <h3>${p.name}</h3>
+        </div>
+        ${ratingHtml}
+      </div>
+      <p class="addr"><span class="areatag">${p.area}</span> · ${p.addr}</p>
+      <div class="meter-row">
+        <div class="meter">
+          <div class="mv">${p.distanceKm.toFixed(1)}<small> km</small></div>
+          <div class="ml">Jarak lurus</div>
+        </div>
+        <div class="meter">
+          <div class="mv">${mins}<small> mnt</small></div>
+          <div class="ml">Estimasi motor</div>
+        </div>
+      </div>
+      <div class="tagrow" data-id="${p.id}">
+        <span class="tagrow-label">Status:</span>
+        ${pillsHtml}
+      </div>
+      <div class="actions">
+        <a class="btn loc" href="${p.locationLink}" target="_blank" rel="noopener">Lihat Lokasi</a>
+        ${waBtn}
+      </div>
+      <a class="miniroute" href="${p.routeLink}" target="_blank" rel="noopener">Rute dari titik acuan →</a>
+    </div>
+  `;
+}
+
+// Diganti dari koordinat % layar (projectAll) ke jarak geografis riil
+function clusterPointsGeo(items, thresholdKm){
+  const clusters = [];
+  items.forEach(it => {
+    let found = null;
+    for(const c of clusters){
+      if(haversineKm(c.lat, c.lng, it.lat, it.lng) < thresholdKm){ found = c; break; }
+    }
+    if(found){
+      found.items.push(it);
+      found.lat = found.items.reduce((s,p)=>s+p.lat,0)/found.items.length;
+      found.lng = found.items.reduce((s,p)=>s+p.lng,0)/found.items.length;
+    } else {
+      clusters.push({ lat: it.lat, lng: it.lng, items: [it] });
+    }
+  });
+  return clusters;
+}
+
+function renderMapDetail(list){
+  const el = document.getElementById('mapDetail');
+  if(!state.mapSelection){ el.innerHTML = ''; return; }
+
+  if(state.mapSelection.type === 'single'){
+    const p = list.find(x => x.id === state.mapSelection.id);
+    if(!p){ state.mapSelection = null; el.innerHTML = ''; return; }
+    el.innerHTML = renderKosCard(p) + `<button class="mapdetail-close" id="mapDetailClose">Tutup</button>`;
+  } else {
+    const items = list.filter(x => state.mapSelection.ids.includes(x.id));
+    if(items.length === 0){ state.mapSelection = null; el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="clusterlist">
+        <p class="clusterlist-title">${items.length} kos berdekatan di titik ini:</p>
+        ${items.map(p => `<button class="clusterlist-item" data-pick-id="${p.id}">${escapeHtml(p.name)} · ${p.distanceKm.toFixed(1)} km</button>`).join('')}
+      </div>
+      <button class="mapdetail-close" id="mapDetailClose">Tutup</button>
+    `;
+  }
+}
+
+function renderMap(list){
+  const canvas = document.getElementById('mapCanvas');
+  if(!leafletMap){
+    leafletMap = L.map('mapCanvas').setView([state.ref.lat, state.ref.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(leafletMap);
+    mapLayerGroup = L.layerGroup().addTo(leafletMap);
+  }
+
+  mapLayerGroup.clearLayers();
+
+  if(list.length === 0){
+    renderMapDetail(list);
+    return;
+  }
+
+  // Jarak 0.2 km untuk trigger cluster statis di Leaflet
+  const clusters = clusterPointsGeo(list, 0.2);
+
+  // Buat marker Leaflet custom menggunakan divIcon untuk Kos
+  clusters.forEach(c => {
+    if(c.items.length === 1){
+      const p = c.items[0];
+      const cls = p.phone ? 'ada' : 'tanpa';
+      const html = `
+        <div class="mapmarker single" style="transform:translate(-50%,-100%);">
+          <div class="mapbubble">${p.distanceKm.toFixed(1)} km</div>
+          <div class="mapdot ${cls}"></div>
+        </div>
+      `;
+      const icon = L.divIcon({ html: html, className: '', iconSize: [0,0] });
+      const marker = L.marker([c.lat, c.lng], { icon: icon }).addTo(mapLayerGroup);
+      marker.on('click', () => {
+        state.mapSelection = { type:'single', id: p.id };
+        renderMapDetail(list);
+      });
+    } else {
+      const ids = c.items.map(p=>p.id).join(',');
+      const html = `
+        <div class="mapmarker cluster" style="transform:translate(-50%,-50%);">
+          <div class="clusterbadge">${c.items.length}</div>
+        </div>
+      `;
+      const icon = L.divIcon({ html: html, className: '', iconSize: [0,0] });
+      const marker = L.marker([c.lat, c.lng], { icon: icon }).addTo(mapLayerGroup);
+      marker.on('click', () => {
+        state.mapSelection = { type:'cluster', ids: c.items.map(p=>p.id) };
+        renderMapDetail(list);
+      });
+    }
+  });
+
+  // Buat marker untuk titik referensi
+  const refHtml = `
+    <div class="mapmarker refmark" style="transform:translate(-50%,-50%);">
+      <div class="refpin"></div>
+      <div class="reflabel">${escapeHtml(state.ref.label)}</div>
+    </div>
+  `;
+  const refIcon = L.divIcon({ html: refHtml, className: '', iconSize: [0,0] });
+  L.marker([state.ref.lat, state.ref.lng], { icon: refIcon, zIndexOffset: 1000 }).addTo(mapLayerGroup);
+
+  renderMapDetail(list);
+}
+
+function render(){
+  updateRefDisplay();
+  renderTagOptionsPreview();
+  renderFilterOptions();
+
+  const withDistance = DATA.map(p => ({
+    ...p,
+    distanceKm: haversineKm(state.ref.lat, state.ref.lng, p.lat, p.lng),
+    routeLink: `https://www.google.com/maps/dir/?api=1&origin=${state.ref.lat},${state.ref.lng}&destination=${p.lat},${p.lng}&travelmode=driving`
+  }));
+
+  const q = state.search.trim().toLowerCase();
+  let filtered = withDistance.filter(p => p.name.toLowerCase().includes(q) || p.addr.toLowerCase().includes(q));
+  if(state.filterTag){
+    filtered = filtered.filter(p => (state.kosTags[p.id]||[]).includes(state.filterTag));
+  }
+
+  const ada = filtered.filter(p => p.phone);
+  const tanpa = filtered.filter(p => !p.phone);
+  document.getElementById('countAda').textContent = `(${ada.length})`;
+  document.getElementById('countTanpa').textContent = `(${tanpa.length})`;
+  document.getElementById('totalCount').textContent = `${DATA.length} KOS`;
+
+  let list = state.tab === 'ada' ? ada : tanpa;
+
+  list = list.slice().sort((a,b) => {
+    if(state.sort === 'distance') return a.distanceKm - b.distanceKm;
+    if(state.sort === 'rating') return (b.rating||0) - (a.rating||0);
+    if(state.sort === 'name') return a.name.localeCompare(b.name);
+    return 0;
+  });
+
+  document.getElementById('viewListBtn').classList.toggle('active', state.view === 'list');
+  document.getElementById('viewMapBtn').classList.toggle('active', state.view === 'map');
+  document.getElementById('list').style.display = state.view === 'list' ? '' : 'none';
+  document.getElementById('mapWrap').style.display = state.view === 'map' ? '' : 'none';
+
+  if(state.view === 'map'){
+    renderMap(list);
+    // Timeout mencegah display:none bug dari rendering tiles Leaflet
+    setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 50);
+    return;
+  }
+
+  const container = document.getElementById('list');
+  if(list.length === 0){
+    container.innerHTML = `<div class="empty">Tidak ada kos yang cocok dengan pencarian ini.</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(renderKosCard).join('');
+}
+
+document.getElementById('searchInput').addEventListener('input', e => { state.search = e.target.value; render(); });
+document.getElementById('sortSelect').addEventListener('change', e => { state.sort = e.target.value; render(); });
+document.getElementById('speedRange').addEventListener('input', e => {
+  state.speed = Number(e.target.value);
+  document.getElementById('speedVal').textContent = `${state.speed} km/j`;
+  render();
+});
+document.getElementById('tabAda').addEventListener('click', () => { state.tab='ada'; setActiveTab(); render(); });
+document.getElementById('tabTanpa').addEventListener('click', () => { state.tab='tanpa'; setActiveTab(); render(); });
+function setActiveTab(){
+  document.getElementById('tabAda').classList.toggle('active', state.tab==='ada');
+  document.getElementById('tabTanpa').classList.toggle('active', state.tab==='tanpa');
+}
+
+document.getElementById('refApplyBtn').addEventListener('click', () => {
+  const raw = document.getElementById('refPasteInput').value;
+  const parsed = parseRefInput(raw);
+  const errorEl = document.getElementById('refError');
+  if(!parsed){
+    errorEl.style.display = raw.trim() ? 'block' : 'none';
+    if(!raw.trim()) return;
+    return;
+  }
+  errorEl.style.display = 'none';
+  const customLabel = document.getElementById('refLabelInput').value.trim();
+  state.ref = {
+    lat: parsed.lat,
+    lng: parsed.lng,
+    label: customLabel || `${parsed.lat.toFixed(5)}, ${parsed.lng.toFixed(5)}`
+  };
+  // Push map center to new ref if Leaflet is active
+  if(leafletMap) leafletMap.setView([state.ref.lat, state.ref.lng], 14);
+  render();
+});
+
+document.getElementById('chipKG').addEventListener('click', () => {
+  state.ref = {...DEFAULT_REF};
+  if(leafletMap) leafletMap.setView([state.ref.lat, state.ref.lng], 14);
+  render();
+});
+
+document.getElementById('chipVelo').addEventListener('click', () => {
+  state.ref = {...VELODROME_REF};
+  if(leafletMap) leafletMap.setView([state.ref.lat, state.ref.lng], 14);
+  render();
+});
+
+function addNewTag(){
+  const input = document.getElementById('newTagInput');
+  const val = input.value.trim();
+  if(!val) return;
+  const exists = state.tagOptions.some(t => t.toLowerCase() === val.toLowerCase());
+  if(!exists){
+    state.tagOptions.push(val);
+    safeSet('tag-options', JSON.stringify(state.tagOptions));
+  }
+  input.value = '';
+  render();
+}
+document.getElementById('addTagBtn').addEventListener('click', addNewTag);
+document.getElementById('newTagInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); addNewTag(); }
+});
+
+document.getElementById('tagOptionsPreview').addEventListener('click', e => {
+  const btn = e.target.closest('[data-remove-tag]');
+  if(!btn) return;
+  const tag = btn.dataset.removeTag;
+  state.tagOptions = state.tagOptions.filter(t => t !== tag);
+  Object.keys(state.kosTags).forEach(id => {
+    state.kosTags[id] = (state.kosTags[id]||[]).filter(t => t !== tag);
+  });
+  if(state.filterTag === tag) state.filterTag = '';
+  safeSet('tag-options', JSON.stringify(state.tagOptions));
+  safeSet('kos-tags', JSON.stringify(state.kosTags));
+  render();
+});
+
+document.getElementById('filterTagSelect').addEventListener('change', e => {
+  state.filterTag = e.target.value;
+  render();
+});
+
+document.getElementById('list').addEventListener('click', e => {
+  const btn = e.target.closest('.pill');
+  if(!btn) return;
+  const id = Number(btn.dataset.id);
+  const tag = btn.dataset.tag;
+  const arr = state.kosTags[id] ? state.kosTags[id].slice() : [];
+  const idx = arr.indexOf(tag);
+  if(idx > -1) arr.splice(idx,1); else arr.push(tag);
+  state.kosTags[id] = arr;
+  safeSet('kos-tags', JSON.stringify(state.kosTags));
+  render();
+});
+
+document.getElementById('viewListBtn').addEventListener('click', () => {
+  state.view = 'list';
+  render();
+});
+document.getElementById('viewMapBtn').addEventListener('click', () => {
+  state.view = 'map';
+  render();
+});
+
+// Event listener click delegator dihilangkan dari `#mapCanvas`,
+// Karena Leaflet Marker punya scope click listener masing-masing.
+
+document.getElementById('mapDetail').addEventListener('click', e => {
+  const closeBtn = e.target.closest('#mapDetailClose');
+  if(closeBtn){ state.mapSelection = null; render(); return; }
+  const pickBtn = e.target.closest('[data-pick-id]');
+  if(pickBtn){ 
+    state.mapSelection = { type:'single', id: Number(pickBtn.dataset.pickId) };
+    const tab = state.tab === 'ada' ? document.getElementById('tabAda') : document.getElementById('tabTanpa');
+    render(); 
+    return; 
+  }
+  const pill = e.target.closest('.pill');
+  if(pill){
+    const id = Number(pill.dataset.id);
+    const tag = pill.dataset.tag;
+    const arr = state.kosTags[id] ? state.kosTags[id].slice() : [];
+    const idx = arr.indexOf(tag);
+    if(idx > -1) arr.splice(idx,1); else arr.push(tag);
+    state.kosTags[id] = arr;
+    safeSet('kos-tags', JSON.stringify(state.kosTags));
+    render();
+  }
+});
+
+loadPersisted();
+</script>
+</body>
+</html>
